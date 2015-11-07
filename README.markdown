@@ -29,7 +29,7 @@ The server will be used by two classes of user: the audience and QLab. QLab will
 **Upload an image and broadcast to clients:**
 
 ```bash
-curl -i -H "Authorization: wE5oD8mEk0ghAit4" http://localhost:3000/public -F image=@[path/to/image.jpg]
+curl -ik -H "Authorization: wE5oD8mEk0ghAit4" https://localhost:3000/public -F image=@[path/to/image.jpg]
 ```
 
 This has the effect of uploading an image to the public directory and telling all clients to use the new image.
@@ -37,7 +37,7 @@ This has the effect of uploading an image to the public directory and telling al
 **Broadcast an existing image to clients:**
 
 ```bash
-curl -i -H "Authorization: wE5oD8mEk0ghAit4" -X PUT http://localhost:3000/broadcast/displayImage\?image\=[image.jpg]
+curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:3000/broadcast/displayImage\?image\=[image.jpg]
 ```
 
 This requires that `image.jpg` is already in the server's `public` directory.
@@ -45,13 +45,13 @@ This requires that `image.jpg` is already in the server's `public` directory.
 **Hide an image on clients:**
 
 ```bash
-curl -i -H "Authorization: wE5oD8mEk0ghAit4" -X PUT http://localhost:3000/broadcast/hideImage
+curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:3000/broadcast/hideImage
 ```
 
 **Exit the 'show mode':**
 
 ```bash
-curl -i -H "Authorization: wE5oD8mEk0ghAit4" -X PUT http://localhost:3000/broadcast/exitShowMode
+curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:3000/broadcast/exitShowMode
 ```
 
 ### Client
@@ -59,11 +59,10 @@ curl -i -H "Authorization: wE5oD8mEk0ghAit4" -X PUT http://localhost:3000/broadc
 **Upload an image to the server's private directory:**
 
 ```bash
-curl -i -H "Authorization: sillappkey579xtz" http://localhost:3000/private\?uid\=[uid]\&tag\=[tag] -F image=@[path/to/image.jpg]
+curl -ik -H "Authorization: sillappkey579xtz" https://localhost:3000/private\?uid\=[uid]\&tag\=[tag] -F image=@[path/to/image.jpg]
 ```
 
 Note that clients use a different authorization token.
 
   * uid: usually the email address of the user, but may be the device id
   * tag: tag is a short label such as 'front', 'rear', 'photo1', etc which helps identify the image
-

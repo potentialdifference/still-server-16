@@ -1,4 +1,7 @@
-var server = require('http').createServer()
+var fs = require('fs')
+  , key  = fs.readFileSync('ssl/server.key')
+  , cert = fs.readFileSync('ssl/server.cert')
+  , server = require('https').createServer({key: key, cert: cert})
   , url = require('url')
   , WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({ server: server })
@@ -6,7 +9,7 @@ var server = require('http').createServer()
   , multer = require('multer')
   , util = require('util')
   , app = express()
-  , port = 3000;
+  , port = 8080;
 
 var requireAuth = function(key) {
     return function (req, res, next) {
