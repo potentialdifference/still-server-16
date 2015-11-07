@@ -1,15 +1,17 @@
 var fs = require('fs')
   , key  = fs.readFileSync('ssl/server.key')
   , cert = fs.readFileSync('ssl/server.cert')
-  , server = require('https').createServer({key: key, cert: cert})
-  , url = require('url')
+  , https = require('https').createServer({key: key, cert: cert})
+  , http = require('http').createServer()
   , WebSocketServer = require('ws').Server
-  , wss = new WebSocketServer({ server: server })
+  , wss = new WebSocketServer({ server: http })
   , express = require('express')
   , multer = require('multer')
   , util = require('util')
   , app = express()
-  , port = 8080;
+  , publicApp = express() 
+  , httpsPort = 8080
+  , httpPort = 8081;
 
 var requireAuth = function(key) {
     return function (req, res, next) {
@@ -49,8 +51,6 @@ var publicStorage = multer.diskStorage({
         cb(null, file.originalname)
     }
 })
-
-app.use('/public', express.static('public'))
 
 var privateAuth = requireAuth('stillappkey579xtz')
 var publicAuth = requireAuth('wE5oD8mEk0ghAit4')
@@ -100,8 +100,18 @@ app.put('/broadcast/exitShowMode',
             res.status(204).end()
         })
 
-server.on('request', app);
+// Above is all done over HTTPS to protect tokens
+https.on('request', app);
 
-server.listen(port, function () {
-    console.log("Server listening on port " + server.address().port);
+// Below serves the public directory over http
+publicApp.use('/public', express.static('public'))
+http.on('request',  publicApp)
+
+// Start servers
+https.listen(httpsPort, function () {
+    console.log("HTTPS Server listening on port " + https.address().port)
+});
+
+http.listen(httpPort, function () {
+    console.log("HTTP Server listening on port " + http.address().port)
 });
