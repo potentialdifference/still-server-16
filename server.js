@@ -70,7 +70,7 @@ app.post('/public',
          multer({ storage: publicStorage }).single('image'),
          function (req, res, next) {
              wss.broadcast({'message': 'displayImage',
-                            'path': 'public/' + req.file.filename})
+                            'path': '/public/' + req.file.filename})
              res.status(204).end()
          })
 
@@ -79,7 +79,7 @@ app.put('/broadcast/displayImage',
         function (req, res, next) {
             if (req.query.image) {
                 wss.broadcast({'message': 'displayImage',
-                               'path': 'public/' + req.query.image})
+                               'path': '/public/' + req.query.image})
                 res.status(204).end()
             } else {
                 res.status(400).end()
