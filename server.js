@@ -35,9 +35,10 @@ var privateStorage = multer.diskStorage({
         cb(null, 'private/')
     },
     filename: function (req, file, cb) {
-        var name = util.format('%s-%s-%s',
+        var name = util.format('%s-%s-%s-%s',
                                req.query.uid,
                                req.query.tag,
+							   new Date().valueOf(),
                                file.originalname)
         cb(null, name)
     }
