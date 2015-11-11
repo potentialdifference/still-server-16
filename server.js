@@ -14,9 +14,7 @@ var fs = require('fs')
   , httpPort = 8081;
 
 var requireAuth = function(key) {
-    return function (req, res, next) {
-	console.log(req.headers.authorization)
-	console.log(key)
+    return function (req, res, next) {	
         if (req.headers.authorization != key) {
             res.status(401).end()
         } else {
