@@ -1,6 +1,6 @@
 var fs = require('fs')
   , key  = fs.readFileSync('ssl/server.key')
-  , cert = fs.readFileSync('ssl/server.cert')
+  , cert = fs.readFileSync('ssl/server.crt')
   , https = require('https').createServer({key: key, cert: cert})
   , http = require('http').createServer()
   , WebSocketServer = require('ws').Server
@@ -38,7 +38,7 @@ var privateStorage = multer.diskStorage({
         var name = util.format('%s-%s-%s-%s',
                                req.query.uid,
                                req.query.tag,
-			       new Date().valueOf(),
+							new Date().valueOf(),
                                file.originalname)
         cb(null, name)
     }
@@ -53,8 +53,8 @@ var publicStorage = multer.diskStorage({
     }
 })
 
-var privateAuth = requireAuth('stillappkey579xtz')
-var publicAuth  = requireAuth('wE5oD8mEk0ghAit4')
+var privateAuth = requireAuth('j2GY21Djms5pqfH2')
+var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
 
 
 // This is where the audience uploads to
