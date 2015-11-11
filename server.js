@@ -15,6 +15,8 @@ var fs = require('fs')
 
 var requireAuth = function(key) {
     return function (req, res, next) {
+	console.log(req.headers.authorization)
+	console.log(key)
         if (req.headers.authorization != key) {
             res.status(401).end()
         } else {
@@ -56,8 +58,6 @@ var publicStorage = multer.diskStorage({
 var privateAuth = requireAuth('stillappkey579xtz')
 var publicAuth  = requireAuth('wE5oD8mEk0ghAit4')
 
-// Below serves the public directory over https
-app.use('/public', [privateAuth, express.static('public')])
 
 // This is where the audience uploads to
 app.post('/private',
@@ -115,3 +115,6 @@ https.listen(httpsPort, function () {
 http.listen(httpPort, function () {
     console.log("HTTP Server listening on port " + http.address().port)
 });
+
+// Below serves the public directory over https
+app.use('/public', [privateAuth, express.static('public')])
