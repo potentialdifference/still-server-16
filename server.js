@@ -54,7 +54,10 @@ var publicStorage = multer.diskStorage({
 })
 
 var privateAuth = requireAuth('stillappkey579xtz')
-var publicAuth = requireAuth('wE5oD8mEk0ghAit4')
+var publicAuth  = requireAuth('wE5oD8mEk0ghAit4')
+
+// Below serves the public directory over https
+app.use('/public', [privateAuth, express.static('public')])
 
 // This is where the audience uploads to
 app.post('/private',
@@ -103,10 +106,6 @@ app.put('/broadcast/exitShowMode',
 
 // Above is all done over HTTPS to protect tokens
 https.on('request', app);
-
-// Below serves the public directory over http
-publicApp.use('/public', express.static('public'))
-http.on('request',  publicApp)
 
 // Start servers
 https.listen(httpsPort, function () {
