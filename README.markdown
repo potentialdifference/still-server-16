@@ -29,7 +29,7 @@ The server will be used by two classes of user: the audience and QLab. QLab will
 **Upload an image and broadcast to clients:**
 
 ```bash
-curl -ik -H "Authorization: wE5oD8mEk0ghAit4" https://localhost:8080/public -F image=@[path/to/image.jpg]
+curl -ik -H "Authorization: x9RHJ2I6nWi376Wa" https://localhost:8080/public -F image=@[path/to/image.jpg]
 ```
 
 This has the effect of uploading an image to the public directory and telling all clients to use the new image.
@@ -37,7 +37,7 @@ This has the effect of uploading an image to the public directory and telling al
 **Broadcast an existing image to clients:**
 
 ```bash
-curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:8080/broadcast/displayImage\?image\=[image.jpg]
+curl -ik -H "Authorization: x9RHJ2I6nWi376Wa" -X PUT https://localhost:8080/broadcast/displayImage\?image\=[image.jpg]
 ```
 
 This requires that `image.jpg` is already in the server's `public` directory.
@@ -45,13 +45,13 @@ This requires that `image.jpg` is already in the server's `public` directory.
 **Hide an image on clients:**
 
 ```bash
-curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:8080/broadcast/hideImage
+curl -ik -H "Authorization: x9RHJ2I6nWi376Wa" -X PUT https://localhost:8080/broadcast/hideImage
 ```
 
 **Exit the 'show mode':**
 
 ```bash
-curl -ik -H "Authorization: wE5oD8mEk0ghAit4" -X PUT https://localhost:8080/broadcast/exitShowMode
+curl -ik -H "Authorization: x9RHJ2I6nWi376Wa" -X PUT https://localhost:8080/broadcast/exitShowMode
 ```
 
 ### Client
