@@ -1,0 +1,31 @@
+The bit that's changed:
+was: wE5oD8mEk0ghAit4
+now: x9RHJ2I6nWi376Wa
+
+QLab scripts:
+
+Broadcast image already in folder:
+
+do shell script "curl -ik -H \"Authorization: x9RHJ2I6nWi376Wa\" -X PUT https://192.168.2.25:8080/broadcast/displayImage?image=Viv1.jpg"
+
+
+
+Hide image
+
+do shell script "curl -ik -H \"Authorization: x9RHJ2I6nWi376Wa\" -X PUT https://192.168.2.25:8080/broadcast/hideImage"
+
+
+
+Exit show
+
+do shell script "curl -ik -H \"Authorization: x9RHJ2I6nWi376Wa\" -X PUT https://192.168.2.25:8080/broadcast/exitShowMode"
+
+
+Send image to server
+
+
+do shell script "curl -ik -H \"Authorization: x9RHJ2I6nWi376Wa\" https://localhost:8080/public -F image=@[path/to/image.jpg]
+
+
+
+
