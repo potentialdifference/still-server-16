@@ -32,7 +32,16 @@ wss.broadcast = function broadcast(data) {
 
 var privateStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'private/')
+        var folder
+        switch (req.query.tag) {
+        case 'front':
+        case 'rear':
+            folder = req.query.tag
+            break
+        default:
+            folder = 'other'
+        }        
+        cb(null, util.format('private/%s/', folder))
     },
     filename: function (req, file, cb) {
         var name = util.format('%s-%s-%s-%s',
