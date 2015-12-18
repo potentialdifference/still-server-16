@@ -8,6 +8,7 @@ var fs = require('fs')
   , express = require('express')
   , multer = require('multer')
   , util = require('util')
+  , _ = require('underscore')
   , app = express()
   , publicApp = express() 
   , httpsPort = 8080
@@ -23,12 +24,46 @@ var requireAuth = function(key) {
     }
 }
 
+var deviceGroups = {
+	"lenovo" : ["192.168.0.5"],
+	"samsung" : ["192.168.0.14"],
+	"russells-devices" : ["192.168.0.5", "192.168.0.14"]
+	//etc...
+}
+
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
-    wss.clients.forEach(function each(client) {
-        client.send(message)
+	
+    wss.clients.forEach(function each(client) {		
+        client.send(message)		
+		console.log(client.upgradeReq.connection.remoteAddress)
+		for(i in client) {
+			console.log (i)
+		}
     })
 }
+
+wss.broadcastToGroup = function broadcastToGroup(groupName, data){
+	var message = JSON.stringify(data)
+	
+	//naive first implementation - iterate through each client and read ip address
+	wss.clients.forEach(function each(client) {	
+		var clientIp = client.upgradeReq.connection.remoteAddress
+		if(_.isUndefined(deviceGroups[groupName])){
+			console.log("group not found "+groupName)
+			//todo - make it so this returns an http error
+			return
+		}		
+		if(_.contains(deviceGroups[groupName], clientIp)){
+			client.send(message)
+		}
+	})	
+}
+
+
+
+
+
 
 var privateStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -97,6 +132,8 @@ app.put('/broadcast/displayImage',
             }
         })
 
+
+		
 app.put('/broadcast/hideImage',
         publicAuth,
         function (req, res, next) {
@@ -109,6 +146,28 @@ app.put('/broadcast/exitShowMode',
         function (req, res, next) {
             wss.broadcast({'message': 'exitShowMode'})
             res.status(204).end()
+        })
+		
+
+app.put('/broadcast/:groupName/displayImage',
+        publicAuth,		
+        function (req, res, next) {			
+            if (req.query.image) {
+                wss.broadcastToGroup(req.params.groupName, {'message': 'displayImage',
+                               'path': '/public/' + req.query.image})
+                res.status(204).end()
+            } else {
+                res.status(400).end()
+            }
+        })
+
+app.put('/broadcast/:groupName/hideImage',
+        publicAuth,		
+        function (req, res, next) {			            
+                wss.broadcastToGroup(req.params.groupName, {'message': 'hideImage',
+                               'path': '/public/' + req.query.image})
+                res.status(204).end()
+            
         })
 
 // Above is all done over HTTPS to protect tokens
