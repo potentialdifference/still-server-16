@@ -13,6 +13,8 @@ var fs = require('fs')
   , publicApp = express() 
   , httpsPort = 8080
   , httpPort = 8081;
+  
+
 
 var requireAuth = function(key) {
     return function (req, res, next) {	
@@ -30,6 +32,8 @@ var deviceGroups = {
 	"russells-devices" : ["192.168.0.5", "192.168.0.14"]
 	//etc...
 }
+
+
 
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
@@ -164,8 +168,60 @@ app.put('/broadcast/:groupName/displayImage',
 app.put('/broadcast/:groupName/hideImage',
         publicAuth,		
         function (req, res, next) {			            
-                wss.broadcastToGroup(req.params.groupName, {'message': 'hideImage',
-                               'path': '/public/' + req.query.image})
+                wss.broadcastToGroup(req.params.groupName, {'message': 'hideImage'})
+                res.status(204).end()
+            
+        })
+		
+app.put('/broadcast/:groupName/streamVideo',
+        publicAuth,		
+        function (req, res, next) {			
+				
+            if (req.query.url) {
+                wss.broadcastToGroup(req.params.groupName, 
+				{
+					'message': 'streamVideo',
+                    'url': req.query.url,
+					'width' : req.query.width,
+					'height': req.query.height
+					//could add other optional params in here 
+				})
+                res.status(204).end()
+            } else {
+                res.status(400).end()
+            }
+			console.log(req.query.width)
+				console.log(req.query.height)
+        })
+	
+app.put('/broadcast/:groupName/startCameraStream',
+        publicAuth,		
+        function (req, res, next) {			
+							
+				
+                wss.broadcastToGroup(req.params.groupName, 
+				{
+					'message': 'startCameraStream',
+					'width' : req.query.width,
+					'height': req.query.height
+					//could add other optional params in here 
+				})
+                res.status(204).end()
+				console.log(req.query.width)
+				console.log(req.query.height)
+            
+        })		
+
+		
+app.put('/broadcast/:groupName/stop',
+        publicAuth,		
+        function (req, res, next) {			
+            
+                wss.broadcastToGroup(req.params.groupName, 
+				{
+					'message': 'stop',            
+					//could add other optional params in here 
+				})
                 res.status(204).end()
             
         })
