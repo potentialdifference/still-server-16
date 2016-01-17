@@ -238,5 +238,11 @@ http.listen(httpPort, function () {
     console.log("HTTP Server listening on port " + http.address().port)
 });
 
+app.get('/dashboard', function(req, res) {
+	console.log("requested dashboard");
+    res.render('serverDashboard.html');
+});
+
 // Below serves the public directory over https
 app.use('/public', [privateAuth, express.static('public')])
+app.use('/dashboard', express.static('dashboard'));
