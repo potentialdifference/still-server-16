@@ -26,23 +26,36 @@ height: <input value="400" type="text" id="streamHeight"/>
 <button> go</button>
 </div>
 
-<div id="showImage" class="button">
-Show image <select id="images"></select>
-on: <select id="showImageClient" class="clientList"></select>
+<div id="streamVideoFromServer" class="button">
+Show video <input type="file" id="videoToShow"></input>
+on: <select id="showVideoClient" class="clientList"></select>
 <button> go</button>
 </div>
-
-<div id="showText" class="button">
-Show text <input type="text" id="textToShow"/>
-on: <select id="showImageClient" class="clientList"></select>
-<button> go</button>
-</div>
-
 
 <div id="stopStream" class="button">
 Stop streaming: <select id="stopClient" class="clientList"></select>
 <button> go</button>
 </div>
+
+<div id="showImage" class="button">
+Show image <input type="file" id="imageToShow"></input>
+on: <select id="showImageClient" class="clientList"></select>
+<button> go</button>
+</div>
+
+<div id="hideImage" class="button">
+Hide image 
+on: <select id="hideImageClient" class="clientList"></select>
+<button> go</button>
+</div>
+
+<div id="showText" class="button">
+Show text <input type="text" id="textToShow"/>
+on: <select id="showTextClient" class="clientList"></select>
+<button> go</button>
+</div>
+
+
 
 
 <div id="showText" class="button">
@@ -52,6 +65,8 @@ on: <select id="playVideoClient" class="clientList"></select>
 </div>
 
 <script type="text/javascript">
+
+var localIp = "192.168.0.4";
 	var clients = {
 		"Lenovo tablet" : {"name" : "lenovo", "url" : "http://192.168.0.5:8085"}, 
 		"Samsung phone": {"name" : "samsung", "url" : "http://192.168.0.14:8085"},
@@ -75,23 +90,30 @@ on: <select id="playVideoClient" class="clientList"></select>
 		var startStreamUrl = "https://localhost:8080/broadcast/"+from+"/startCameraStream?width="+width+"&height="+height;
 		var streamUrl = _.find(clients, function(client){return client.name===from}).url;
 		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?url="+streamUrl+"&width="+width+"&height="+height;
-		$.when(makeAjaxRequest(startStreamUrl)).then(makeAjaxRequest(viewStreamUrl));
-		//makeAjaxRequest(startStreamUrl).resolve();
-		/*$.ajax({
-		  url: startStreamUrl,
-		  method: "PUT",
-		  beforeSend: function(xhr){		      
-				xhr.setRequestHeader('Authorization', "x9RHJ2I6nWi376Wa");      				  
-		  },
-		})  .done(function( data ) {
-			
-		}).fail(function(error){
-		alert(JSON.stringify(error));});*/
+		//$.when(makeAjaxRequest(startStreamUrl)).then(makeAjaxRequest(viewStreamUrl));
+		makeAjaxRequest(startStreamUrl);
+		setTimeout(function(){makeAjaxRequest(viewStreamUrl)}, 1500);
+	
+	}
+	var sendStreamVideoFromServer = function(video, to){
+		var videoUrl = "http://"+localIp+":8089/videos/"+video;
+		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?format=mp4&url="+videoUrl;
+		makeAjaxRequest(viewStreamUrl);
+	
 	}
 	
 	var sendShowImageTo = function(imagePath, to){
 		var showImageUrl = "https://localhost:8080/broadcast/"+to+"/displayImage?image="+imagePath;
 		makeAjaxRequest(showImageUrl);
+	}
+	var sendHideImageTo = function(to){
+		var hideImageUrl = "https://localhost:8080/broadcast/"+to+"/hideImage";
+		makeAjaxRequest(hideImageUrl);
+	}
+	
+	var stopStreaming = function(client){
+		var stopUrl = "https://localhost:8080/broadcast/"+client+"/stop";
+		makeAjaxRequest(stopUrl);
 	}
 	
 	$("#streamFromTo button").click(function(){
@@ -102,14 +124,28 @@ on: <select id="playVideoClient" class="clientList"></select>
 		sendStreamVideoFromTo(from, to, width, height);
 	});
 	
+	$("#streamVideoFromServer button").click(function(){
+		var video = $('#videoToShow').val();
+		var to =  $('#showVideoClient').val();		
+		sendStreamVideoFromServer(video, to);
+	});
+	
 	$("#stopStream button").click(function(){
-		alert("not yet implemented");
+		var client = $('#stopClient').val();
+		stopStreaming(client);
+		
 	});
 	
 	$("#showImage button").click(function(){
-		var image = $('#images').val();
+		var image = $('#imageToShow').val();
 		var to =  $('#showImageClient').val();
 		sendShowImageTo(image, to);
+	});
+	
+	$("#hideImage button").click(function(){
+		
+		var to =  $('#hideImageClient').val();
+		sendHideImageTo(to);
 	});
 	
 	//bind client lists:
@@ -120,12 +156,8 @@ on: <select id="playVideoClient" class="clientList"></select>
 	var clientDropdowns = $(".clientList");
 	clientDropdowns.append(clientOptionsHtml);
 	
-	//bind image paths:
-	var imageOptionsHtml = '';
-	_.each(imagePaths, function(image, key){
-		imageOptionsHtml += '<option value="'+image+'">'+image+'</option>';
-	});
-	$("#images").append(clientOptionsHtml);	
+	
+	
 	</script>
 
 </body>

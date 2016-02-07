@@ -3,6 +3,7 @@ var fs = require('fs')
   , cert = fs.readFileSync('ssl/server.crt')
   , https = require('https').createServer({key: key, cert: cert})
   , http = require('http').createServer()
+  , http2 = require('http').createServer()  
   , WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({ server: http })
   , express = require('express')
@@ -12,7 +13,8 @@ var fs = require('fs')
   , app = express()
   , publicApp = express() 
   , httpsPort = 8080
-  , httpPort = 8081;
+  , httpPort = 8081
+  , http2Port = 8089;
   
 
 
@@ -25,6 +27,8 @@ var requireAuth = function(key) {
         }
     }
 }
+
+
 
 var deviceGroups = {
 	"lenovo" : ["192.168.0.5"],
@@ -176,6 +180,10 @@ app.put('/broadcast/:groupName/hideImage',
 app.put('/broadcast/:groupName/streamVideo',
         publicAuth,		
         function (req, res, next) {			
+			var format = "mjpeg"
+			if(req.query.format){
+				format = req.query.format
+			}
 				
             if (req.query.url) {
                 wss.broadcastToGroup(req.params.groupName, 
@@ -183,16 +191,18 @@ app.put('/broadcast/:groupName/streamVideo',
 					'message': 'streamVideo',
                     'url': req.query.url,
 					'width' : req.query.width,
-					'height': req.query.height
+					'height': req.query.height,
+					'format' : format
 					//could add other optional params in here 
 				})
                 res.status(204).end()
             } else {
                 res.status(400).end()
             }
-			console.log(req.query.width)
-				console.log(req.query.height)
+			
         })
+		
+
 	
 app.put('/broadcast/:groupName/startCameraStream',
         publicAuth,		
@@ -229,6 +239,9 @@ app.put('/broadcast/:groupName/stop',
 // Above is all done over HTTPS to protect tokens
 https.on('request', app);
 
+http2.on('request', publicApp);
+
+
 // Start servers
 https.listen(httpsPort, function () {
     console.log("HTTPS Server listening on port " + https.address().port)
@@ -238,11 +251,15 @@ http.listen(httpPort, function () {
     console.log("HTTP Server listening on port " + http.address().port)
 });
 
-app.get('/dashboard', function(req, res) {
-	console.log("requested dashboard");
-    res.render('serverDashboard.html');
+http2.listen(http2Port, function () {
+    console.log("HTTP Server listening on port " + http2.address().port)
 });
 
 // Below serves the public directory over https
 app.use('/public', [privateAuth, express.static('public')])
-app.use('/dashboard', express.static('dashboard'));
+
+//note - these two currently don't enforce auth key:
+app.use('/dashboard', express.static('dashboard'))
+
+publicApp.use('/videos', express.static('videos'))
+
