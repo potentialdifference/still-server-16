@@ -49,19 +49,16 @@ on: <select id="hideImageClient" class="clientList"></select>
 <button> go</button>
 </div>
 
-<div id="showText" class="button">
-Show text <input type="text" id="textToShow"/>
-on: <select id="showTextClient" class="clientList"></select>
+<div id="openWebPage" class="button">
+Open webpage<input type="file" id="webpage"></input>
+on: <select id="openWebpageClient" class="clientList"></select>
 <button> go</button>
 </div>
 
 
 
 
-<div id="showText" class="button">
-Play video <select id="videos"></select>
-on: <select id="playVideoClient" class="clientList"></select>
-<button> go</button>
+
 </div>
 
 <script type="text/javascript">
@@ -116,6 +113,13 @@ var localIp = "192.168.0.4";
 		makeAjaxRequest(stopUrl);
 	}
 	
+	var sendOpenWebpage = function(page, to){
+		var pageUrl = "http://"+localIp+":8089/pages/"+page;
+		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?url="+pageUrl;
+		makeAjaxRequest(viewWebPageUrl);
+	
+	}
+	
 	$("#streamFromTo button").click(function(){
 		var from = $('#streamFromClient').val();
 		var to =  $('#streamToClient').val();
@@ -146,6 +150,12 @@ var localIp = "192.168.0.4";
 		
 		var to =  $('#hideImageClient').val();
 		sendHideImageTo(to);
+	});
+	
+	$("#openWebPage button").click(function(){
+		var page = $('#webpage').val();
+		var to =  $('#openWebpageClient').val();		
+		sendOpenWebpage(page, to);
 	});
 	
 	//bind client lists:
