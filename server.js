@@ -216,10 +216,25 @@ app.put('/broadcast/:groupName/startCameraStream',
 					'height': req.query.height
 					//could add other optional params in here 
 				})
-                res.status(204).end()
-				console.log(req.query.width)
-				console.log(req.query.height)
+                res.status(204).end()				
             
+        })		
+		
+app.put('/broadcast/:groupName/openWebPage',
+        publicAuth,		
+        function (req, res, next) {						
+				
+            if (req.query.url) {
+                wss.broadcastToGroup(req.params.groupName, 
+				{
+					'message': 'openWebPage',
+                    'url': req.query.url					
+				})
+                res.status(204).end()
+            } else {
+                res.status(400).end()
+            }
+			
         })		
 
 		
@@ -262,4 +277,6 @@ app.use('/public', [privateAuth, express.static('public')])
 app.use('/dashboard', express.static('dashboard'))
 
 publicApp.use('/videos', express.static('videos'))
+
+publicApp.use('/pages', express.static('htmlPages'))
 
