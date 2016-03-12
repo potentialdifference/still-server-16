@@ -22,7 +22,7 @@
 Start stream from: <select id="streamFromClient" class="clientList"></select>
 to:  <select id="streamToClient" class="clientList"/></select>
 width: <input value="800" type="text" id="streamWidth"/>
-height: <input value="400" type="text" id="streamHeight"/>
+height: <input value="480" type="text" id="streamHeight"/>
 <button> go</button>
 </div>
 
@@ -55,6 +55,14 @@ on: <select id="openWebpageClient" class="clientList"></select>
 <button> go</button>
 </div>
 
+<div id="displayText" class="button">
+Display text<input type="text" id="textToDisplay"></input>
+on: <select id="displayTextClient" class="clientList"></select>
+Size<input type="text" id="textSize" value="5"></input>
+Colour<input type="text" id="textColour" value="white"></input>
+<button> go</button>
+</div>
+
 
 
 
@@ -63,12 +71,12 @@ on: <select id="openWebpageClient" class="clientList"></select>
 
 <script type="text/javascript">
 
-var localIp = "192.168.0.4";
+var localIp = "192.168.2.23";
 	var clients = {
-		"Lenovo tablet" : {"name" : "lenovo", "url" : "http://192.168.0.5:8085"}, 
-		"Samsung phone": {"name" : "samsung-phone", "url" : "http://192.168.0.14:8085"},
-		"Samsung tablet": {"name" : "samsung-tablet", "url" : "http://192.168.0.19:8085"},
-		"HTC one": {"name" : "htc-one", "url" : "http://192.168.0.20:8085"},
+		"Lenovo tablet" : {"name" : "lenovo", "url" : "http://192.168.2.30:8085"}, 
+		"Samsung phone": {"name" : "samsung-phone", "url" : "http://192.168.2.33:8085"},
+		"Samsung tablet": {"name" : "samsung-tablet", "url" : "http://192.168.2.47:8085"},
+		"HTC one": {"name" : "htc-one", "url" : "http://192.168.0.18:8085"},
 		"phones" : {"name" : "phones"},
 		"Tablets" : {"name" : "tablets"},
 		"All" : {"name" : "all"}
@@ -124,6 +132,14 @@ var localIp = "192.168.0.4";
 	
 	}
 	
+	var sendDisplayText = function(text, to, size, colour){
+		var htmlToSend="<html><body style='background-color:black;'><span style='font-size:"+size+"em; color:"+colour+";'>"+text+"</span></body></html>";
+		
+		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?html="+encodeURI(htmlToSend);
+		makeAjaxRequest(viewWebPageUrl);
+	
+	}
+	
 	$("#streamFromTo button").click(function(){
 		var from = $('#streamFromClient').val();
 		var to =  $('#streamToClient').val();
@@ -160,6 +176,14 @@ var localIp = "192.168.0.4";
 		var page = $('#webpage').val();
 		var to =  $('#openWebpageClient').val();		
 		sendOpenWebpage(page, to);
+	});
+	
+	$("#displayText button").click(function(){
+		var text = $('#textToDisplay').val();
+		var size = $('#textSize').val();
+		var colour = $('#textColour').val();
+		var to =  $('#displayTextClient').val();		
+		sendDisplayText(text, to, size, colour);
 	});
 	
 	//bind client lists:

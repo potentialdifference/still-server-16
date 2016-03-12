@@ -31,13 +31,13 @@ var requireAuth = function(key) {
 
 
 var deviceGroups = {
-	"lenovo" : ["192.168.0.5"],
-	"samsung-phone" : ["192.168.0.14"],
-	"samsung-tablet" : ["192.168.0.19"],
-	"htc-one" : ["192.168.0.20"],
-	"phones" : ["192.168.0.14", "192.168.0.20"],
-	"tablets" : ["192.168.0.5", "192.168.0.19"],
-	"all" : ["192.168.0.5", "192.168.0.19","192.168.0.14", "192.168.0.20"]
+	"lenovo" : ["192.168.2.30"],
+	"samsung-phone" : ["192.168.2.33"],
+	"samsung-tablet" : ["192.168.2.47"],
+	"htc-one" : ["192.168.0.18"],
+	"phones" : ["192.168.0.18", "192.168.2.33"],
+	"tablets" : ["192.168.2.30", "192.168.2.47"],
+	"all" : ["192.168.2.30", "192.168.2.47","192.168.2.33", "192.168.0.19"]
 	//etc...
 }
 
@@ -57,17 +57,23 @@ wss.broadcast = function broadcast(data) {
 
 wss.broadcastToGroup = function broadcastToGroup(groupName, data){
 	var message = JSON.stringify(data)
-	
+	console.log("broadcasting "+groupName+" "+data)
 	//naive first implementation - iterate through each client and read ip address
 	wss.clients.forEach(function each(client) {	
-		var clientIp = client.upgradeReq.connection.remoteAddress
+		var ipRegExp = /\d+.\d+.\d+.\d+/
+		var clientIp = ipRegExp.exec(client.upgradeReq.connection.remoteAddress)+""
+		
+		console.log("checking "+clientIp)
 		if(_.isUndefined(deviceGroups[groupName])){
 			console.log("group not found "+groupName)
 			//todo - make it so this returns an http error
 			return
 		}		
 		if(_.contains(deviceGroups[groupName], clientIp)){
+			console.log("sendong to "+clientIp)
 			client.send(message)
+		}else{
+			console.log(JSON.stringify(deviceGroups[groupName]) + "doesn't contain "+clientIp)
 		}
 	})	
 }
@@ -235,6 +241,13 @@ app.put('/broadcast/:groupName/openWebPage',
                     'url': req.query.url					
 				})
                 res.status(204).end()
+			} else if (req.query.html){
+				wss.broadcastToGroup(req.params.groupName, 
+				{
+					'message': 'openWebPage',
+                    'html': req.query.html					
+				})
+                res.status(204).end()			
             } else {
                 res.status(400).end()
             }
