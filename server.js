@@ -85,25 +85,19 @@ wss.broadcastToGroup = function broadcastToGroup(groupName, data){
 
 
 var privateStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        var folder
-        switch (req.query.tag) {
-        case 'front':
-        case 'rear':
-            folder = req.query.tag
-            break
-        default:
-            folder = 'other'
-        }        
-        cb(null, util.format('private/%s/', folder))
+	    
+
+    destination: function (req, file, cb) {		
+        cb(null, 'public/', ".")
     },
-    filename: function (req, file, cb) {
-        var name = util.format('%s-%s-%s-%s',
+    filename: function (req, file, cb) {		
+        /*var name = util.format('%s-%s-%s-%s',
                                req.query.uid,
                                req.query.tag,
 							new Date().valueOf(),
-                               file.originalname)
-        cb(null, name)
+                               file.originalname)*/
+        console.log("filename: "+req.query.name)
+		cb(null, req.query.name)
     }
 })
 
@@ -219,12 +213,16 @@ app.put('/broadcast/:groupName/startCameraStream',
         publicAuth,		
         function (req, res, next) {			
 							
-				
+				var frontCamera = false
+				if(req.query.frontCamera){
+					frontCamera = req.query.frontCamera
+				}
                 wss.broadcastToGroup(req.params.groupName, 
 				{
 					'message': 'startCameraStream',
 					'width' : req.query.width,
-					'height': req.query.height
+					'height': req.query.height,
+					'frontCamera' : frontCamera
 					//could add other optional params in here 
 				})
                 res.status(204).end()				
@@ -266,6 +264,22 @@ app.put('/broadcast/:groupName/stop',
 					//could add other optional params in here 
 				})
                 res.status(204).end()
+            
+        })
+		
+	app.put('/broadcast/:groupName/takePicture',
+        publicAuth,		
+        function (req, res, next) {		
+			if(req.query.fileName){
+                wss.broadcastToGroup(req.params.groupName, {
+					'message': 'takePicture',
+					'fileName': req.query.fileName
+					
+					})
+                res.status(204).end()
+			} else {
+                res.status(400).end()
+            }
             
         })
 

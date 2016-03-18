@@ -1,8 +1,9 @@
 <html>
 <head>
-	<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.js"></script>
 	
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js"></script>
+	<script type="text/javascript" src="jquery-2.2.1.min.js"></script>
+	
+	<script type="text/javascript" src="underscore-min.js"></script>
 	
 	
 	
@@ -23,36 +24,44 @@ Start stream from: <select id="streamFromClient" class="clientList"></select>
 to:  <select id="streamToClient" class="clientList"/></select>
 width: <input value="800" type="text" id="streamWidth"/>
 height: <input value="480" type="text" id="streamHeight"/>
-<button> go</button>
+Use front camera: <input name="frontCamera" value="false" type="checkbox" id="frontCamera"/>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
 <div id="streamVideoFromServer" class="button">
 Show video <input type="file" id="videoToShow"></input>
 on: <select id="showVideoClient" class="clientList"></select>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
 <div id="stopStream" class="button">
 Stop streaming: <select id="stopClient" class="clientList"></select>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
 <div id="showImage" class="button">
 Show image <input type="file" id="imageToShow"></input>
 on: <select id="showImageClient" class="clientList"></select>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
 <div id="hideImage" class="button">
 Hide image 
 on: <select id="hideImageClient" class="clientList"></select>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
 <div id="openWebPage" class="button">
 Open webpage<input type="file" id="webpage"></input>
 on: <select id="openWebpageClient" class="clientList"></select>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
+
 </div>
 
 <div id="displayText" class="button">
@@ -60,12 +69,27 @@ Display text<input type="text" id="textToDisplay"></input>
 on: <select id="displayTextClient" class="clientList"></select>
 Size<input type="text" id="textSize" value="5"></input>
 Colour<input type="text" id="textColour" value="white"></input>
-<button> go</button>
+<button class="go"> go</button>
+<button class="qlab">get script</button>
 </div>
 
+<div id="takePicture" class="button">
+Take picture on: <select id="takePictureClient" class="clientList"></select>
+, save it as <input type="text" id="pictureName" value="image"></input>
 
-<textarea id="script-output"></textarea>
+<button class="take go"> go</button>
+<button class="take qlab">get script</button>
+<br/>
+Then broadcast to  <select id="sendPictureToClient" class="clientList"></select>
+<button class="send go"> go</button>
+<button class="send qlab">get script</button>
+</div>
 
+<br/>
+<br/>
+Paste the following into a qlab script cue:
+<br/>
+<textarea rows="5" cols="60" id="qlab-output"></textarea>
 
 </div>
 
@@ -96,96 +120,186 @@ var localIp = "192.168.1.21";
 		});
 	}
 	
-	var sendStreamVideoFromTo = function(from, to, width, height){
-		var startStreamUrl = "https://localhost:8080/broadcast/"+from+"/startCameraStream?width="+width+"&height="+height;
+	var generateQlabCue = function(url){
+		var script = 'do shell script "curl -ik -H \\\"Authorization: x9RHJ2I6nWi376Wa\\\" -X PUT '+url+'"';
+		$('#qlab-output').val(script);
+	
+	}
+	
+	var sendStreamVideoFromTo = function(from, to, width, height, frontCamera, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
+		var startStreamUrl = "https://localhost:8080/broadcast/"+from+"/startCameraStream?width="+width+"&height="+height+"&frontCamera="+frontCamera;
 		var streamUrl = _.find(clients, function(client){return client.name===from}).url;
 		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?url="+streamUrl+"&width="+width+"&height="+height;
 		//$.when(makeAjaxRequest(startStreamUrl)).then(makeAjaxRequest(viewStreamUrl));
-		makeAjaxRequest(startStreamUrl);
-		setTimeout(function(){makeAjaxRequest(viewStreamUrl)}, 1500);
+		sendCallback(startStreamUrl);
+		setTimeout(function(){sendCallback(viewStreamUrl)}, 1500);
 	
 	}
-	var sendStreamVideoFromServer = function(video, to){
+	var sendStreamVideoFromServer = function(video, to, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
 		var videoUrl = "http://"+localIp+":8089/videos/"+video;
 		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?format=mp4&url="+videoUrl;
-		makeAjaxRequest(viewStreamUrl);
+		sendCallback(viewStreamUrl);
 	
 	}
 	
-	var sendShowImageTo = function(imagePath, to){
+	var sendShowImageTo = function(imagePath, to, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
 		var showImageUrl = "https://localhost:8080/broadcast/"+to+"/displayImage?image="+imagePath;
-		makeAjaxRequest(showImageUrl);
+		sendCallback(showImageUrl);
 	}
-	var sendHideImageTo = function(to){
+	var sendHideImageTo = function(to, sendCallback){
+		if(!sendCallback){
+				sendCallback = makeAjaxRequest;
+		}
 		var hideImageUrl = "https://localhost:8080/broadcast/"+to+"/hideImage";
-		makeAjaxRequest(hideImageUrl);
+		sendCallback(hideImageUrl);
 	}
 	
-	var stopStreaming = function(client){
+	var stopStreaming = function(client, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
 		var stopUrl = "https://localhost:8080/broadcast/"+client+"/stop";
-		makeAjaxRequest(stopUrl);
+		sendCallback(stopUrl);
 	}
 	
-	var sendOpenWebpage = function(page, to){
+	var sendOpenWebpage = function(page, to, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
 		var pageUrl = "http://"+localIp+":8089/pages/"+page;
 		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?url="+pageUrl;
-		makeAjaxRequest(viewWebPageUrl);
+		sendCallback(viewWebPageUrl);
 	
 	}
 	
-	var sendDisplayText = function(text, to, size, colour){
+	var sendDisplayText = function(text, to, size, colour, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
 		var htmlToSend="<html><body style='background-color:black;'><span style='font-size:"+size+"em; color:"+colour+";'>"+text+"</span></body></html>";
 		
 		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?html="+encodeURI(htmlToSend);
-		makeAjaxRequest(viewWebPageUrl);
+		sendCallback(viewWebPageUrl);
 	
 	}
+
+
+	var sendTakePicture = function(to, fileName, sendCallback){
+		if(!sendCallback){
+			sendCallback = makeAjaxRequest;
+		}
+		
+		var takePictureUrl = "https://localhost:8080/broadcast/"+to+"/takePicture?fileName="+fileName;
+		sendCallback(takePictureUrl);
 	
+	}	
 	$("#streamFromTo button").click(function(){
+		var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var from = $('#streamFromClient').val();
 		var to =  $('#streamToClient').val();
 		var width = $('#streamWidth').val();
 		var height = $('#streamHeight').val();
-		sendStreamVideoFromTo(from, to, width, height);
+		var frontCamera = $("#frontCamera").prop("checked") === true
+		sendStreamVideoFromTo(from, to, width, height, frontCamera, sendCallback);
 	});
 	
 	$("#streamVideoFromServer button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var video = $('#videoToShow').val();
 		var to =  $('#showVideoClient').val();		
-		sendStreamVideoFromServer(video, to);
+		sendStreamVideoFromServer(video, to, sendCallback);
 	});
 	
 	$("#stopStream button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var client = $('#stopClient').val();
-		stopStreaming(client);
+		stopStreaming(client, sendCallback);
 		
 	});
 	
 	$("#showImage button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var image = $('#imageToShow').val();
 		var to =  $('#showImageClient').val();
-		sendShowImageTo(image, to);
+		sendShowImageTo(image, to, sendCallback);
 	});
 	
 	$("#hideImage button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		
 		var to =  $('#hideImageClient').val();
-		sendHideImageTo(to);
+		sendHideImageTo(to, sendCallback);
 	});
 	
 	$("#openWebPage button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var page = $('#webpage').val();
 		var to =  $('#openWebpageClient').val();		
-		sendOpenWebpage(page, to);
+		sendOpenWebpage(page, to, sendCallback);
 	});
 	
 	$("#displayText button").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
 		var text = $('#textToDisplay').val();
 		var size = $('#textSize').val();
 		var colour = $('#textColour').val();
 		var to =  $('#displayTextClient').val();		
-		sendDisplayText(text, to, size, colour);
+		sendDisplayText(text, to, size, colour, sendCallback);
 	});
+	
+	$("#takePicture button.take").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
+		
+		var fileName = $('#pictureName').val();
+		var to =  $('#takePictureClient').val();		
+		sendTakePicture(to, fileName, sendCallback);
+	});
+	$("#takePicture button.send").click(function(){
+	var sendCallback = makeAjaxRequest;
+		if($(this).hasClass("qlab")){
+			sendCallback = generateQlabCue;
+		}
+		
+		var fileName = $('#pictureName').val();
+		var to =  $('#sendPictureToClient').val();		
+		sendShowImageTo(fileName, to, sendCallback);
+		
+		
+	});
+	
 	
 	//bind client lists:
 	var clientOptionsHtml = '';
