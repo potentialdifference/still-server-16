@@ -3,7 +3,7 @@ var fs = require('fs')
   , cert = fs.readFileSync('ssl/server.crt')
   , https = require('https').createServer({key: key, cert: cert})
   , http = require('http').createServer()
-  , http2 = require('http').createServer()  
+  , http2 = require('http').createServer()
   , WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({ server: http })
   , express = require('express')
@@ -14,21 +14,17 @@ var fs = require('fs')
   , publicApp = express() 
   , httpsPort = 8080
   , httpPort = 8081
-  , http2Port = 8089;
+  , http2Port = 8089
   
-
-
 var requireAuth = function(key) {
     return function (req, res, next) {	
         if (req.headers.authorization != key) {
             res.status(401).end()
         } else {
-            next();
+            next()
         }
     }
 }
-
-
 
 var deviceGroups = {
 	"lenovo" : ["192.168.2.30"],
@@ -42,8 +38,6 @@ var deviceGroups = {
 	//etc...
 }
 
-
-
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
 	
@@ -56,48 +50,36 @@ wss.broadcast = function broadcast(data) {
     })
 }
 
-wss.broadcastToGroup = function broadcastToGroup(groupName, data){
-	var message = JSON.stringify(data)
-	console.log("broadcasting "+groupName+" "+data)
-	//naive first implementation - iterate through each client and read ip address
-	wss.clients.forEach(function each(client) {	
-		var ipRegExp = /\d+.\d+.\d+.\d+/
-		var clientIp = ipRegExp.exec(client.upgradeReq.connection.remoteAddress)+""
-		
-		console.log("checking "+clientIp)
-		if(_.isUndefined(deviceGroups[groupName])){
-			console.log("group not found "+groupName)
-			//todo - make it so this returns an http error
-			return
-		}		
-		if(_.contains(deviceGroups[groupName], clientIp)){
-			console.log("sendong to "+clientIp)
-			client.send(message)
-		}else{
-			console.log(JSON.stringify(deviceGroups[groupName]) + "doesn't contain "+clientIp)
-		}
-	})	
+wss.broadcastToGroup = function broadcastToGroup(groupName, data) {
+    var message = JSON.stringify(data)
+    console.log("broadcasting " + groupName + " " + data)
+    //naive first implementation - iterate through each client and read ip address
+    wss.clients.forEach(function each(client) {
+	var ipRegExp = /\d+.\d+.\d+.\d+/
+	var clientIp = ipRegExp.exec(client.upgradeReq.connection.remoteAddress) + ""
+
+	console.log("checking " + clientIp)
+	if (_.isUndefined(deviceGroups[groupName])) {
+	    console.log("group not found " + groupName)
+	    //todo - make it so this returns an http error
+	    return
+	}
+	if (_.contains(deviceGroups[groupName], clientIp)) {
+	    console.log("sending to " + clientIp)
+	    client.send(message)
+	} else {
+	    console.log(JSON.stringify(deviceGroups[groupName]) + "doesn't contain " + clientIp)
+        }
+    })
 }
 
-
-
-
-
-
 var privateStorage = multer.diskStorage({
-	    
-
-    destination: function (req, file, cb) {		
+    destination: function (req, file, cb) {
         cb(null, 'public/', ".")
     },
-    filename: function (req, file, cb) {		
-        /*var name = util.format('%s-%s-%s-%s',
-                               req.query.uid,
-                               req.query.tag,
-							new Date().valueOf(),
-                               file.originalname)*/
-        console.log("filename: "+req.query.name)
-		cb(null, req.query.name)
+    filename: function (req, file, cb) {
+        console.log("filename: " + req.query.name)
+	cb(null, req.query.name)
     }
 })
 
@@ -112,7 +94,6 @@ var publicStorage = multer.diskStorage({
 
 var privateAuth = requireAuth('j2GY21Djms5pqfH2')
 var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
-
 
 // This is where the audience uploads to
 app.post('/private',
@@ -145,8 +126,6 @@ app.put('/broadcast/displayImage',
             }
         })
 
-
-		
 app.put('/broadcast/hideImage',
         publicAuth,
         function (req, res, next) {
@@ -160,7 +139,6 @@ app.put('/broadcast/exitShowMode',
             wss.broadcast({'message': 'exitShowMode'})
             res.status(204).end()
         })
-		
 
 app.put('/broadcast/:groupName/displayImage',
         publicAuth,		
@@ -181,126 +159,115 @@ app.put('/broadcast/:groupName/hideImage',
                 res.status(204).end()
             
         })
-		
+
 app.put('/broadcast/:groupName/streamVideo',
         publicAuth,		
         function (req, res, next) {			
-			var format = "mjpeg"
-			if(req.query.format){
-				format = req.query.format
-			}
-				
+	    var format = "mjpeg"
+	    if(req.query.format){
+		format = req.query.format
+	    }
+	    
             if (req.query.url) {
                 wss.broadcastToGroup(req.params.groupName, 
-				{
-					'message': 'streamVideo',
-                    'url': req.query.url,
-					'width' : req.query.width,
-					'height': req.query.height,
-					'format' : format
-					//could add other optional params in here 
-				})
+				     {
+					 'message': 'streamVideo',
+                                         'url': req.query.url,
+					 'width' : req.query.width,
+					 'height': req.query.height,
+					 'format' : format
+					 //could add other optional params in here 
+				     })
+                console.log("Getting video stream " + req.query.width + ", " + req.query.height)
                 res.status(204).end()
             } else {
                 res.status(400).end()
             }
-			
         })
-		
 
-	
 app.put('/broadcast/:groupName/startCameraStream',
-        publicAuth,		
-        function (req, res, next) {			
-							
-				var frontCamera = false
-				if(req.query.frontCamera){
-					frontCamera = req.query.frontCamera
-				}
-                wss.broadcastToGroup(req.params.groupName, 
-				{
-					'message': 'startCameraStream',
-					'width' : req.query.width,
-					'height': req.query.height,
-					'frontCamera' : frontCamera
-					//could add other optional params in here 
-				})
-                res.status(204).end()				
-            
-        })		
-		
+        publicAuth,
+        function (req, res, next) {
+	    var frontCamera = false
+	    if(req.query.frontCamera) {
+		frontCamera = req.query.frontCamera
+	    }
+            wss.broadcastToGroup(req.params.groupName,
+				 {
+				     'message': 'startCameraStream',
+				     'width' : req.query.width,
+				     'height': req.query.height,
+				     'frontCamera' : frontCamera
+				     //could add other optional params in here
+				 })
+            console.log("Starting camera stream " + req.query.width + ", " + req.query.height)
+            res.status(204).end()
+        })
+
 app.put('/broadcast/:groupName/openWebPage',
-        publicAuth,		
-        function (req, res, next) {						
-				
+        publicAuth,
+        function (req, res, next) {
             if (req.query.url) {
                 wss.broadcastToGroup(req.params.groupName, 
-				{
-					'message': 'openWebPage',
-                    'url': req.query.url					
-				})
+				     {
+					 'message': 'openWebPage',
+                                         'url': req.query.url
+				     })
                 res.status(204).end()
-			} else if (req.query.html){
-				wss.broadcastToGroup(req.params.groupName, 
-				{
-					'message': 'openWebPage',
-                    'html': req.query.html					
-				})
-                res.status(204).end()			
+	    } else if (req.query.html){
+		wss.broadcastToGroup(req.params.groupName,
+                                     {
+					 'message': 'openWebPage',
+                                         'html': req.query.html
+				     })
+                res.status(204).end()
             } else {
                 res.status(400).end()
             }
-			
-        })		
-
+        })
 		
 app.put('/broadcast/:groupName/stop',
-        publicAuth,		
-        function (req, res, next) {			
-            
-                wss.broadcastToGroup(req.params.groupName, 
-				{
-					'message': 'stop',            
-					//could add other optional params in here 
-				})
-                res.status(204).end()
-            
+        publicAuth,
+        function (req, res, next) {
+            wss.broadcastToGroup(req.params.groupName,
+				 {
+				     'message': 'stop',
+				     //could add other optional params in here
+				 })
+            res.status(204).end()
         })
-		
-	app.put('/broadcast/:groupName/takePicture',
-        publicAuth,		
-        function (req, res, next) {		
-			if(req.query.fileName){
+
+app.put('/broadcast/:groupName/takePicture',
+        publicAuth,
+        function (req, res, next) {
+	    if(req.query.fileName){
                 wss.broadcastToGroup(req.params.groupName, {
-					'message': 'takePicture',
-					'fileName': req.query.fileName
-					
-					})
+		    'message': 'takePicture',
+		    'fileName': req.query.fileName
+		})
                 res.status(204).end()
-			} else {
+	    } else {
                 res.status(400).end()
             }
-            
         })
 
 // Above is all done over HTTPS to protect tokens
-https.on('request', app);
+https.on('request', app)
 
-http2.on('request', publicApp);
-
+http2.on('request', publicApp)
 
 // Start servers
 https.listen(httpsPort, function () {
     console.log("HTTPS Server listening on port " + https.address().port)
-});
+})
 
 http.listen(httpPort, function () {
     console.log("HTTP Server listening on port " + http.address().port)
-});
+})
 
 http2.listen(http2Port, function () {
     console.log("HTTP Server listening on port " + http2.address().port)
-});
+})
 
 // Below serves the public directory over https
 app.use('/public', [privateAuth, express.static('public')])
@@ -311,4 +278,3 @@ app.use('/dashboard', express.static('dashboard'))
 publicApp.use('/videos', express.static('videos'))
 
 publicApp.use('/pages', express.static('htmlPages'))
-
