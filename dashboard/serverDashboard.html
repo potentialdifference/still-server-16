@@ -95,13 +95,17 @@ Paste the following into a qlab script cue:
 
 <script type="text/javascript">
 
+var hostname = "192.168.1.21";
 var localIp = "192.168.1.21";
 	var clients = {
-		"Lenovo tablet" : {"name" : "lenovo", "url" : "http://192.168.2.30:8085"}, 
+		"Lenovo black" : {"name" : "lenovo", "url" : "http://192.168.2.30:8085"}, 
+		"Lenovo white" : {"name" : "lenovo-white", "url" : "http://192.168.2.29:8085"}, 
 		"Samsung phone": {"name" : "samsung-phone", "url" : "http://192.168.2.33:8085"},
 		"Samsung tablet": {"name" : "samsung-tablet", "url" : "http://192.168.2.47:8085"},
 		"HTC one": {"name" : "htc-one", "url" : "http://192.168.2.50:8085"},
-		"Nexus 7": {"name" : "nexus-7", "url" : "http://192.168.2.48:8085"},
+		"Nexus 1": {"name" : "nexus-1", "url" : "http://192.168.2.48:8085"},
+		"Nexus 2": {"name" : "nexus-2", "url" : "http://192.168.2.28:8085"},		
+	
 		"phones" : {"name" : "phones"},
 		"Tablets" : {"name" : "tablets"},
 		"All" : {"name" : "all"}
@@ -120,9 +124,15 @@ var localIp = "192.168.1.21";
 		});
 	}
 	
-	var generateQlabCue = function(url){
-		var script = 'do shell script "curl -ik -H \\\"Authorization: x9RHJ2I6nWi376Wa\\\" -X PUT '+url+'"';
-		$('#qlab-output').val(script);
+	var generateQlabCue = function(url, append){
+		var script = 'do shell script "curl -ik -H \\\"Authorization: x9RHJ2I6nWi376Wa\\\" -X PUT \\"'+url+'\\" &"';
+		if(append && append === true){
+			var existing = $('#qlab-output').val();
+			$('#qlab-output').val(existing+" \r\n\r\n" + script);
+		}
+		else{
+			$('#qlab-output').val(script);
+		}
 	
 	}
 	
@@ -130,12 +140,12 @@ var localIp = "192.168.1.21";
 		if(!sendCallback){
 			sendCallback = makeAjaxRequest;
 		}
-		var startStreamUrl = "https://localhost:8080/broadcast/"+from+"/startCameraStream?width="+width+"&height="+height+"&frontCamera="+frontCamera;
+		var startStreamUrl = "https://"+hostname+":8080/broadcast/"+from+"/startCameraStream?width="+width+"&height="+height+"&frontCamera="+frontCamera;
 		var streamUrl = _.find(clients, function(client){return client.name===from}).url;
-		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?url="+streamUrl+"&width="+width+"&height="+height;
+		var viewStreamUrl = "https://"+hostname+":8080/broadcast/"+to+"/streamVideo?url="+streamUrl+"&width="+width+"&height="+height;
 		//$.when(makeAjaxRequest(startStreamUrl)).then(makeAjaxRequest(viewStreamUrl));
 		sendCallback(startStreamUrl);
-		setTimeout(function(){sendCallback(viewStreamUrl)}, 1500);
+		setTimeout(function(){sendCallback(viewStreamUrl, true)}, 1500);
 	
 	}
 	var sendStreamVideoFromServer = function(video, to, sendCallback){
@@ -143,7 +153,7 @@ var localIp = "192.168.1.21";
 			sendCallback = makeAjaxRequest;
 		}
 		var videoUrl = "http://"+localIp+":8089/videos/"+video;
-		var viewStreamUrl = "https://localhost:8080/broadcast/"+to+"/streamVideo?format=mp4&url="+videoUrl;
+		var viewStreamUrl = "https://"+hostname+":8080/broadcast/"+to+"/streamVideo?format=mp4&url="+videoUrl;
 		sendCallback(viewStreamUrl);
 	
 	}
@@ -152,14 +162,14 @@ var localIp = "192.168.1.21";
 		if(!sendCallback){
 			sendCallback = makeAjaxRequest;
 		}
-		var showImageUrl = "https://localhost:8080/broadcast/"+to+"/displayImage?image="+imagePath;
+		var showImageUrl = "https://"+hostname+":8080/broadcast/"+to+"/displayImage?image="+imagePath;
 		sendCallback(showImageUrl);
 	}
 	var sendHideImageTo = function(to, sendCallback){
 		if(!sendCallback){
 				sendCallback = makeAjaxRequest;
 		}
-		var hideImageUrl = "https://localhost:8080/broadcast/"+to+"/hideImage";
+		var hideImageUrl = "https://"+hostname+":8080/broadcast/"+to+"/hideImage";
 		sendCallback(hideImageUrl);
 	}
 	
@@ -167,7 +177,7 @@ var localIp = "192.168.1.21";
 		if(!sendCallback){
 			sendCallback = makeAjaxRequest;
 		}
-		var stopUrl = "https://localhost:8080/broadcast/"+client+"/stop";
+		var stopUrl = "https://"+hostname+":8080/broadcast/"+client+"/stop";
 		sendCallback(stopUrl);
 	}
 	
@@ -176,7 +186,7 @@ var localIp = "192.168.1.21";
 			sendCallback = makeAjaxRequest;
 		}
 		var pageUrl = "http://"+localIp+":8089/pages/"+page;
-		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?url="+pageUrl;
+		var viewWebPageUrl = "https://"+hostname+":8080/broadcast/"+to+"/openWebPage?url="+pageUrl;
 		sendCallback(viewWebPageUrl);
 	
 	}
@@ -187,7 +197,7 @@ var localIp = "192.168.1.21";
 		}
 		var htmlToSend="<html><body style='background-color:black;'><span style='font-size:"+size+"em; color:"+colour+";'>"+text+"</span></body></html>";
 		
-		var viewWebPageUrl = "https://localhost:8080/broadcast/"+to+"/openWebPage?html="+encodeURI(htmlToSend);
+		var viewWebPageUrl = "https://"+hostname+":8080/broadcast/"+to+"/openWebPage?html="+encodeURI(htmlToSend);
 		sendCallback(viewWebPageUrl);
 	
 	}
@@ -198,7 +208,7 @@ var localIp = "192.168.1.21";
 			sendCallback = makeAjaxRequest;
 		}
 		
-		var takePictureUrl = "https://localhost:8080/broadcast/"+to+"/takePicture?fileName="+fileName;
+		var takePictureUrl = "https://"+hostname+":8080/broadcast/"+to+"/takePicture?fileName="+fileName;
 		sendCallback(takePictureUrl);
 	
 	}	
