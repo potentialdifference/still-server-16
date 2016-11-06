@@ -1,7 +1,7 @@
 var fs = require('fs')
   , key  = fs.readFileSync('ssl/server.key')
   , cert = fs.readFileSync('ssl/server.crt')
-  , https = require('https').createServer({key: key, cert: cert})
+  , https = require('http').createServer() // {key: key, cert: cert}
   , http = require('http').createServer()
   , http2 = require('http').createServer()
   , WebSocketServer = require('ws').Server
@@ -12,8 +12,8 @@ var fs = require('fs')
   , _ = require('underscore')
   , app = express()
   , publicApp = express() 
-  , httpsPort = 8080
-  , httpPort = 8081
+  , httpsPort = 8443
+  , httpPort = 8080
   , http2Port = 8089
   
 var requireAuth = function(key) {
@@ -99,7 +99,7 @@ var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
 
 // This is where the audience uploads to
 app.post('/private',
-         privateAuth,
+         // privateAuth,
          multer({ storage: privateStorage }).single('image'),
          function (req, res, next) {
              res.status(204).end()
@@ -254,7 +254,7 @@ app.put('/broadcast/:groupName/takePicture',
         })
 
 // Above is all done over HTTPS to protect tokens
-https.on('request', app)
+http.on('request', app)
 
 http2.on('request', publicApp)
 
@@ -272,7 +272,7 @@ http2.listen(http2Port, function () {
 })
 
 // Below serves the public directory over https
-app.use('/public', [privateAuth, express.static('public')])
+app.use('/public', [privateAuth,  express.static('public')])
 
 //note - these two currently don't enforce auth key:
 app.use('/dashboard', express.static('dashboard'))
