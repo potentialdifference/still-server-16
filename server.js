@@ -30,17 +30,14 @@ wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
     wss.clients.forEach(function each(client) {
         client.send(message)
-		console.log(client.upgradeReq.connection.remoteAddress)
-        for(i in client) {
-            console.log (i)
-        }
+		console.log(client.upgradeReq.connection.remoteAddress)        
 
     })
 }
 
 var privateStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        var folder
+        var folder		
         switch (req.query.tag) {
         case 'front':
         case 'rear':
@@ -52,7 +49,7 @@ var privateStorage = multer.diskStorage({
         cb(null, util.format('private/%s/', folder))
     },
     filename: function (req, file, cb) {
-		console.log("filename: " + req.query.name)
+		console.log("saving type: " + req.query.tag)
 
         var name = util.format('%s-%s-%s-%s',
                                req.query.uid,
@@ -76,11 +73,13 @@ var privateAuth = requireAuth('j2GY21Djms5pqfH2')
 var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
 
 
+var upload = multer({ storage: privateStorage })
+
 // This is where the audience uploads to
 app.post('/private',
-         privateAuth,
-         multer({ storage: privateStorage }).single('image'),
-         function (req, res, next) {
+         privateAuth,         
+		 upload.array('images[]'),
+         function (req, res, next) {			 
              res.status(204).end()
          })
 
@@ -111,6 +110,15 @@ app.put('/broadcast/hideImage',
         publicAuth,
         function (req, res, next) {
             wss.broadcast({'instruction': 'hideImage'})
+            res.status(204).end()
+        })
+		
+app.put('/broadcast/displayText',
+        publicAuth,
+        function (req, res, next) {
+
+            wss.broadcast({'instruction': 'displayText',
+							'content': req.query.content})
             res.status(204).end()
         })
 
