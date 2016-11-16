@@ -18,7 +18,8 @@ var fs = require('fs')
 var requireAuth = function(key) {
     return function (req, res, next) {	
         if (req.headers.authorization != key) {
-			console.log("invalid auth")
+	    console.log("Invalid Auth:")
+            console.log(req)
             res.status(401).end()
         } else {
             next()
@@ -35,31 +36,6 @@ wss.broadcast = function broadcast(data) {
     })
 }
 
-var privateStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        var folder		
-        switch (req.query.tag) {
-        case 'front':
-        case 'rear':
-            folder = req.query.tag
-            break
-        default:
-            folder = 'other'
-        }        
-        cb(null, util.format('private/%s/', folder))
-    },
-    filename: function (req, file, cb) {
-		console.log("saving type: " + req.query.tag)
-
-        var name = util.format('%s-%s-%s-%s',
-                               req.query.uid,
-                               req.query.tag,
-							new Date().valueOf(),
-                               file.originalname)
-        cb(null, name)
-    }
-})
-
 var publicStorage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/')
@@ -73,13 +49,27 @@ var privateAuth = requireAuth('j2GY21Djms5pqfH2')
 var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
 
 
-var upload = multer({ storage: privateStorage })
+var upload = multer({ storage: multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, util.format('private/%s/', file.fieldname || "other"))
+        },
+        filename: function (req, file, cb) {
+            var name = util.format('%s-%s-%s-%s',
+                                   req.query.uid,
+                                   file.fieldname,
+			           new Date().valueOf(),
+                                   file.originalname)
+            cb(null, name);
+        }
+    })})
 
 // This is where the audience uploads to
 app.post('/private',
          privateAuth,         
-		 upload.array('images[]'),
-         function (req, res, next) {			 
+	 upload.fields([{name: 'front', maxCount: 10 },
+                        {name: 'rear', maxCount: 10},
+                        {name: 'other', maxCount: 10}]),
+         function (req, res, next) {
              res.status(204).end()
          })
 
