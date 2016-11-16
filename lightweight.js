@@ -1,37 +1,85 @@
 var fs = require('fs')
-  , http = require('http').createServer()
-  , WebSocketServer = require('ws').Server
-  , wss = new WebSocketServer({ server: http })
-  , express = require('express')
-  , multer = require('multer')
-  , util = require('util')
-  , _ = require('underscore')
-  , app = express()
-  , httpPort = 8080
+, http = require('http').createServer()
+, key  = fs.readFileSync('ssl/server.key')
+, cert = fs.readFileSync('ssl/server.crt')
+, https = require('https').createServer({key: key, cert: cert})
+, WebSocketServer = require('ws').Server
+, wss = new WebSocketServer({ server: http })
+, express = require('express')
+, multer = require('multer')
+, util = require('util')
+, _ = require('underscore')
+, publicApp = express()
+, privateApp = express()
+, httpPort = 8080
+, httpsPort = 8443
 
-var privateStorage = multer.diskStorage({
+
+var privateStorage = multer({ storage: multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'private/', ".")
     },
     filename: function (req, file, cb) {
-        console.log(file.originalname)
-	cb(null, file.originalname || "TODO")
+	cb(null, file.originalname)
     }
-})
+})})
 
-var upload = multer({ storage: privateStorage })
+var publicStorage = multer({ storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+}) })
 
-app.post('/private',
-         upload.array('images[]'),
+
+wss.broadcast = function broadcast(data) {
+    var message = JSON.stringify(data)
+    wss.clients.forEach(function each(client) {
+        try {
+            client.send(message)
+        } catch(err) {
+            console.log("error sending " + message)
+        }
+    })
+}
+
+privateApp.post('/public',
+         publicStorage.single('image'),
+         function (req, res, next) {
+             wss.broadcast({'instruction': 'displayImage',
+                            'path': '/public/' + req.file.filename})
+             res.status(204).end()
+         })
+
+privateApp.post('/private',
+         privateStorage.array('images[]'),
          function (req, res, next) {
              console.log("request to private app upload")
              res.status(204).end()
          })
 
-http.on('request', app)
+privateApp.post('/broadcast/text',
+                function (req, res, next) {
+                    console.log("request to broadcast text: " + req.query.message)
+                    wss.broadcast({'instruction': 'displayText',
+                                   'content': req.query.message})
+                    res.status(204).end()
+                })
 
-// app.use('/public',  express.static('public'))
+
+publicApp.use('/public',  express.static('public'))
+
+https.on('request', privateApp)
+http.on('request', publicApp)
 
 http.listen(httpPort, function () {
     console.log("HTTP Server listening on port " + http.address().port)
 })
+
+https.listen(httpsPort, function() {
+    console.log("HTTPS server listening on port " + https.address().port)
+})
+
+
