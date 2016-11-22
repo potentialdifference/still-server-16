@@ -29,11 +29,19 @@ var requireAuth = function(key) {
 
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
+	var count = 0;
     wss.clients.forEach(function each(client) {
-        client.send(message)
-		console.log(client.upgradeReq.connection.remoteAddress)        
+		try{
+			client.send(message)	
+			count++;
+		}catch(err){
+			console.log("failed broadcasting to client: "+err.message)
+		}        
+		
 
-    })
+    }
+	console.log("Broadcast to "+count+ " clients.")
+	)
 }
 
 var publicStorage = multer.diskStorage({
@@ -49,9 +57,10 @@ var privateAuth = requireAuth('j2GY21Djms5pqfH2')
 var publicAuth  = requireAuth('x9RHJ2I6nWi376Wa')
 
 
-var upload = multer({ storage: multer.diskStorage({
+var upload = multer({ storage: multer.diskStorage({		
         destination: function (req, file, cb) {
             cb(null, util.format('private/%s/', file.fieldname || "other"))
+			console.log("uploading: "+JSON.stringify(file))
         },
         filename: function (req, file, cb) {
             var name = util.format('%s-%s-%s-%s',
@@ -69,7 +78,7 @@ app.post('/private',
 	 upload.fields([{name: 'front', maxCount: 10 },
                         {name: 'rear', maxCount: 10},
                         {name: 'other', maxCount: 10}]),
-         function (req, res, next) {
+         function (req, res, next) {			 
              res.status(204).end()
          })
 
