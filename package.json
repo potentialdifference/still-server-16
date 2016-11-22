@@ -1,0 +1,19 @@
+{
+    "name": "still-server",
+    "version": "0.1.0",
+    "main": "server.js",
+    "dependencies": {
+        "express": "4.13.3",
+        "multer": "1.1.0",
+        "ws": "0.8.0", 
+		"underscore" : "1.8.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@bitbucket.org:potentialdifference/still-server.git"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules"
+    ]
+}
