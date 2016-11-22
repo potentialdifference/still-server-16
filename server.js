@@ -41,7 +41,7 @@ wss.broadcast = function broadcast(data) {
 
     }
 	console.log("Broadcast to "+count+ " clients.")
-	)
+	
 }
 
 var publicStorage = multer.diskStorage({
