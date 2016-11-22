@@ -47,19 +47,16 @@ wss.broadcast = function broadcast(data) {
     wss.clients.forEach(function each(client) {
 		
 			client.send(message, function handler(error){
-				if(error){
+				if(!error){
 					count++
 				}
 				else{
 					console.log("failed broadcasting to client: "+error)		
 				}
-			})	
-			
-		
-		
+			})		
 
     })
-	console.log("Broadcast to "+count+ " clients.")
+	
 	
 }
 
@@ -129,7 +126,8 @@ app.put('/broadcast/hideImage',
         function (req, res, next) {
             wss.broadcast({'instruction': 'hideImage'})
             res.status(204).end()
-        })
+        })		
+
 		
 app.put('/broadcast/displayText',
         publicAuth,
@@ -146,6 +144,8 @@ app.put('/broadcast/exitShowMode',
             wss.broadcast({'instruction': 'exitShowMode'})
             res.status(204).end()
         })
+		
+setInterval(function(){wss.broadcast({'instruction': 'keepAlive'})}, 30000)
 
 // Above is all done over HTTPS to protect tokens
 https.on('request', app);
