@@ -12,6 +12,7 @@ var fs = require('fs')
   , publicApp = express() 
   , httpsPort = 8443
   , httpPort = 8080
+  ,  ipRegExp = /\d+.\d+.\d+.\d+/
   
 
 
@@ -27,16 +28,34 @@ var requireAuth = function(key) {
     }
 }
 
+
+wss.on('connection', function connection(client){
+	
+	console.log("connection from " +  ipRegExp.exec(client.upgradeReq.connection.remoteAddress))
+	client.on('close', function () {
+		console.log('stopping client interval');
+    
+	});
+	
+	
+	})
+
 wss.broadcast = function broadcast(data) {
-    var message = JSON.stringify(data)
-	var count = 0
+    var message = JSON.stringify(data),
+	count = 0
+	
     wss.clients.forEach(function each(client) {
-		try{
-			client.send(message)	
-			count++;
-		}catch(err){
-			console.log("failed broadcasting to client: "+err.message)
-		}        
+		
+			client.send(message, function handler(error){
+				if(error){
+					count++
+				}
+				else{
+					console.log("failed broadcasting to client: "+error)		
+				}
+			})	
+			
+		
 		
 
     })
