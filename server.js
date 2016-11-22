@@ -29,7 +29,7 @@ var requireAuth = function(key) {
 
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data)
-	var count = 0;
+	var count = 0
     wss.clients.forEach(function each(client) {
 		try{
 			client.send(message)	
@@ -39,7 +39,7 @@ wss.broadcast = function broadcast(data) {
 		}        
 		
 
-    }
+    })
 	console.log("Broadcast to "+count+ " clients.")
 	
 }
