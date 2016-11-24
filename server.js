@@ -42,6 +42,7 @@ wss.on('connection', function connection(client){
 
 wss.broadcast = function broadcast(data) {
     var message = JSON.stringify(data), count = 0
+    console.log("sending message: ", data.instruction)
     wss.clients.forEach(function each(client) {
 	client.send(message, function handler(error){
 	    if (!error){
