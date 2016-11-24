@@ -41,23 +41,16 @@ wss.on('connection', function connection(client){
 	})
 
 wss.broadcast = function broadcast(data) {
-    var message = JSON.stringify(data),
-	count = 0
-	
+    var message = JSON.stringify(data), count = 0
     wss.clients.forEach(function each(client) {
-		
-			client.send(message, function handler(error){
-				if(!error){
-					count++
-				}
-				else{
-					console.log("failed broadcasting to client: "+error)		
-				}
-			})		
-
+	client.send(message, function handler(error){
+	    if (!error){
+		count++
+	    } else {
+		console.log("failed broadcasting to client: "+error)
+	    }
+	})
     })
-	
-	
 }
 
 var publicStorage = multer.diskStorage({
