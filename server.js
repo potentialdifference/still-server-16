@@ -128,7 +128,8 @@ app.put('/broadcast/displayText',
         function (req, res, next) {
 
             wss.broadcast({'instruction': 'displayText',
-							'content': req.query.content})
+							'content': req.query.content,
+							'notify' :true})
             res.status(204).end()
         })
 
