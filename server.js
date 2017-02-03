@@ -156,4 +156,5 @@ http.listen(httpPort, function () {
 });
 
 // Below serves the public directory over http
-publicApp.use('/public', [/* removed for now - privateAuth,*/ express.static('public')])
+//was publicApp:
+app.use('/public', [/* removed for now - privateAuth,*/ express.static('public')])
