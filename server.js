@@ -1,6 +1,6 @@
 var fs = require('fs')
-  , key  = fs.readFileSync('ssl/server.key')
-  , cert = fs.readFileSync('ssl/server.crt')
+  , key  = fs.readFileSync('ssl/privkey1.pem')
+  , cert = fs.readFileSync('ssl/alcorithm-cert.pem')
   , https = require('https').createServer({key: key, cert: cert})
   , http = require('http').createServer()
   , WebSocketServer = require('ws').Server
