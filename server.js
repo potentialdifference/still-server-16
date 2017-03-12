@@ -12,6 +12,7 @@ var fs = require('fs')
   , publicApp = express() 
   , httpsPort = 8443
   , httpPort = 8080
+  ,  ipRegExp = /\d+.\d+.\d+.\d+/
   
 
 
@@ -27,21 +28,30 @@ var requireAuth = function(key) {
     }
 }
 
-wss.broadcast = function broadcast(data) {
-    var message = JSON.stringify(data)
-	var count = 0
-    wss.clients.forEach(function each(client) {
-		try{
-			client.send(message)	
-			count++;
-		}catch(err){
-			console.log("failed broadcasting to client: "+err.message)
-		}        
-		
 
-    })
-	console.log("Broadcast to "+count+ " clients.")
+wss.on('connection', function connection(client){
 	
+	console.log("connection from " +  ipRegExp.exec(client.upgradeReq.connection.remoteAddress))
+	client.on('close', function () {
+		console.log('stopping client interval');
+    
+	});
+	
+	
+	})
+
+wss.broadcast = function broadcast(data) {
+    var message = JSON.stringify(data), count = 0
+    console.log("sending message: ", data.instruction)
+    wss.clients.forEach(function each(client) {
+	client.send(message, function handler(error){
+	    if (!error){
+		count++
+	    } else {
+		console.log("failed broadcasting to client: "+error)
+	    }
+	})
+    })
 }
 
 var publicStorage = multer.diskStorage({
@@ -110,14 +120,16 @@ app.put('/broadcast/hideImage',
         function (req, res, next) {
             wss.broadcast({'instruction': 'hideImage'})
             res.status(204).end()
-        })
+        })		
+
 		
 app.put('/broadcast/displayText',
         publicAuth,
         function (req, res, next) {
 
             wss.broadcast({'instruction': 'displayText',
-							'content': req.query.content})
+							'content': req.query.content,
+							'notify' :true})
             res.status(204).end()
         })
 
@@ -127,6 +139,8 @@ app.put('/broadcast/exitShowMode',
             wss.broadcast({'instruction': 'exitShowMode'})
             res.status(204).end()
         })
+		
+setInterval(function(){wss.broadcast({'instruction': 'keepAlive'})}, 30000)
 
 // Above is all done over HTTPS to protect tokens
 https.on('request', app);
@@ -142,4 +156,5 @@ http.listen(httpPort, function () {
 });
 
 // Below serves the public directory over http
-publicApp.use('/public', [/* removed for now - privateAuth,*/ express.static('public')])
+//was publicApp:
+app.use('/public', [/* removed for now - privateAuth,*/ express.static('public')])
